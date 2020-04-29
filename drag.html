@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
+	<title>Document</title>
+	<style>
+		body,html {
+			margin: 0;
+			padding: 0;
+			height: 100%;
+		}
+		a {
+	    position: fixed;
+	    line-height: 2.75rem;
+	    width: 2.75rem;
+	    height: 2.75rem;
+	    padding: .5rem;
+	    text-align: center;
+	    border-radius: 99px;
+	    color: #fff;
+	    /* border: 1rem solid transparent; */
+	    background-color: #ed424b;
+	    background-clip: padding-box;
+	    text-decoration: none;
+	    bottom: 8em;
+      right: 0;
+      -webkit-transition: -webkit-transform 0.3s ease-out;
+      transition: transform 0.3s ease-out;
+		}
+	</style>
+</head>
+<body>
+	<a href="javascript:;" class="bll">拖我</a>
+	<script>
+		var Drag = function (el, options) {
+			var defaults = {
+          // 是否吸附边缘
+          edge: true
+      };
+
+			var params = {};
+			options = options || {};
+			for (var key in defaults) {
+				if (typeof options[key] !== 'undefined') {
+					params[key] = options[key];
+				} else {
+					params[key] = defaults[key];
+				}
+			}
+
+			var data = {
+				distanceX: 0,
+				distanceY: 0
+			}
+
+			var win = window;
+
+      // 浏览器窗体尺寸
+      var winWidth = win.innerWidth;
+      var winHeight = win.innerHeight;
+
+      if (!el) {
+        return;
+      }
+
+      // 设置transform坐标等方法
+      var fnTranslate = function (x, y) {
+        x = Math.round(1000 * x) / 1000;
+        y = Math.round(1000 * y) / 1000;
+
+        el.style.webkitTransform = 'translate(' + [x + 'px', y + 'px'].join(',') + ')';
+        el.style.transform = 'translate3d(' + [x + 'px', y + 'px', 0].join(',') + ')';
+      };
+
+      // var strStoreDistance = '';
+      // // 居然有android机子不支持localStorage
+      // if (ele.id && win.localStorage && (strStoreDistance = localStorage['Inertia_' + ele.id])) {
+      //   var arrStoreDistance = strStoreDistance.split(',');
+      //   ele.distanceX = +arrStoreDistance[0];
+      //   ele.distanceY = +arrStoreDistance[1];
+      //   fnTranslate(ele.distanceX, ele.distanceY);
+      // }
+
+      // 显示拖拽元素
+      el.style.visibility = 'visible';
+
+      // 如果元素在屏幕之外，位置使用初始值
+      var initBound = el.getBoundingClientRect();
+      console.log(initBound)
+
+      // if (initBound.left < -0.5 * initBound.width ||
+      //   initBound.top < -0.5 * initBound.height ||
+      //   initBound.right > winWidth + 0.5 * initBound.width ||
+      //   initBound.bottom > winHeight + 0.5 * initBound.height
+      //   ) {
+      //   el.distanceX = 0;
+      //   el.distanceY = 0;
+      //   fnTranslate(0, 0);
+      // }
+
+      el.addEventListener('touchstart', function (event) {
+      	var events = event.touches[0] || event;
+
+        data.touching = true
+      	// 记录开始拖拽之前的位置
+      	data.posX = events.pageX;
+      	data.posY = events.pageY;
+
+      	// data.touching = true;
+
+      	if (el.distanceX) {
+      		data.distanceX = el.distanceX;
+      	}
+
+      	if (el.distanceY) {
+      		data.distanceY = el.distanceY;
+      	}
+
+      	// 元素的位置数据
+        data.bound = el.getBoundingClientRect();
+      })
+      document.addEventListener('touchmove', function (event) {
+      	event.preventDefault();
+
+        if (!data.touching) {
+          return;
+        }
+
+      	var events = event.touches[0] || event;
+
+      	// 记录开始移动位置
+        data.nowX = events.pageX;
+        data.nowY = events.pageY;
+
+        // 记录开始与移动位置的偏差
+        var distanceX = data.nowX - data.posX,
+        		distanceY = data.nowY - data.posY;
+
+        // 计算当前元素的位置
+        var absLeft = data.bound.left + distanceX,
+        		absTop = data.bound.top + distanceY,
+        		absRight = absLeft + data.bound.width,
+        		absBottom = absTop + data.bound.height;
+
+        // 边缘检测
+        if (absLeft < 0) {
+        	distanceX = distanceX - absLeft;
+        }
+
+        if (absTop < 0) {
+        	distanceY = distanceY - absTop;
+        }
+
+        if (absRight > winWidth) {
+        	distanceX = distanceX - (absRight - winWidth);
+        }
+
+        if (absBottom > winHeight) {
+        	distanceY = distanceY - (absBottom - winHeight);
+        }
+
+        // 元素位置跟随
+        var x = data.distanceX + distanceX,
+        y = data.distanceY + distanceY;
+        console.log(data.distanceX)
+        fnTranslate(x, y)
+        el.distanceX = x
+        el.distanceY = y
+      }, {passive: false})
+
+      el.addEventListener('touchend', function (event) {
+        data.touching = false
+        var change = 0;
+
+        // var events = event.touches[0] || event;
+        // // 记录开始移动位置
+        // var endX = events.pageX,
+        //     endY = events.pageY;
+
+        // 判断元素现在在哪个半区
+        var bound = el.getBoundingClientRect();
+        if (bound.left + bound.width / 2 < winWidth / 2) {
+          console.log(bound.width)
+            change = -1 * (winWidth - 60);
+            console.log('左半区')
+        } else {
+            change = '0';
+            console.log('右半区')
+        }
+        console.log(change)
+      	// 移动的水平和垂直距离
+        // el.distanceX = change
+        fnTranslate(change, el.distanceY)
+      })
+		}
+		new Drag(document.querySelector('.bll'))
+	</script>
+</body>
+</html>
